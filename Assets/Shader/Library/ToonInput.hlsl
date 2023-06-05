@@ -10,6 +10,7 @@ SAMPLER(sampler_MainTex);
 CBUFFER_START(UnityPerMaterial)
 half4 _MainTex_ST;
 half4 _MainColor;
+float _Alpha;
 
 // Outline Properties
 half4 _OutlineColor; 

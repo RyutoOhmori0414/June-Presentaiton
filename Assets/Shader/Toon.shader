@@ -4,6 +4,8 @@ Shader "Custom/Toon"
     {
         _MainTex ("Texture", 2D) = "white" {}
         [HDR]_MainColor ("MainColor", Color) = (1, 1, 1, 1)
+        _MainTex ("Texture", 2D) = "white" {}
+        _Alpha ("Alpha", Range(0, 1)) = 1
         [Space(20)]
         [Header(Outline)]
         [HDR]_OutlineColor ("OutlineColor", Color) = (0, 0, 0, 1)
@@ -14,12 +16,11 @@ Shader "Custom/Toon"
         Tags
         {
             "RenderType" = "Transparent"
-            "RenderPipeline" = "UniversalPipeline"
-            "UniversalMaterialType" = "Lit"
-            "IgnoreProjector" = "True"
             "Queue" = "Transparent"
+            "RenderPipeline" = "UniversalPipeline"
         }
         LOD 100
+        Blend SrcAlpha OneMinusSrcAlpha
 
         // Outlineを描画するPass
         Pass
@@ -61,7 +62,12 @@ Shader "Custom/Toon"
 
             half4 frag (v2f i) : SV_Target
             {
-                return half4(MixFog(_OutlineColor.rgb, i.fogFactor), _OutlineColor.a);
+                half4 col = _OutlineColor;
+                col.a *= _Alpha;
+                col.rgb = MixFog(_OutlineColor.rgb, i.fogFactor);
+
+                col.rgb *= col.a;
+                return col;
             }
             ENDHLSL
         }
@@ -98,12 +104,18 @@ Shader "Custom/Toon"
                 v2f o;
                 o.vertex = TransformObjectToHClip(v.vertex);
                 o.uv = TRANSFORM_TEX(v.uv, _MainTex);
+                o.fogFactor = ComputeFogFactor(o.vertex.z);
                 return o;
             }
 
             half4 frag (v2f i) : SV_Target
             {
-                return _MainColor;
+                half4 col = SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, i.uv) * _MainColor;
+                col.a *= _Alpha; 
+                col.rgb = MixFog(col.rgb, i.fogFactor);
+
+                col.rgb *= col.a;
+                return col;
             }
             ENDHLSL
         }
