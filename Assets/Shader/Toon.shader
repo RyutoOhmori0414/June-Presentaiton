@@ -4,8 +4,15 @@ Shader "Custom/Toon"
     {
         _MainTex ("Texture", 2D) = "white" {}
         [HDR]_MainColor ("MainColor", Color) = (1, 1, 1, 1)
-        _MainTex ("Texture", 2D) = "white" {}
         _Alpha ("Alpha", Range(0, 1)) = 1
+        [Space(20)]
+        [Header(Shade1)]
+        _Shade1Color ("Color", Color) = (0, 0, 0, 0)
+        _Shade1Amount ("Amount", Range(0, 1)) = 0.3
+        [Space(10)]
+        [Header(Shade2)]
+        _Shade2Color ("Color", Color) = (0, 0, 0, 0)
+        _Shade2Amount ("Amount", Range(0, 1)) = 0.3
         [Space(20)]
         [Header(Outline)]
         [HDR]_OutlineColor ("OutlineColor", Color) = (0, 0, 0, 1)
@@ -82,14 +89,19 @@ Shader "Custom/Toon"
             #pragma fragment frag
             // 奥行きのFogのキーワード定義
             #pragma multi_compile_fog
+            // GPUInstancingに対応させる
+            #pragma multi_compile_instancing
 
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
             #include "Assets/Shader/Library/ToonInput.hlsl"
 
             struct appdata
             {
                 float4 vertex : POSITION;
                 float2 uv : TEXCOORD0;
+                float3 normal : NORMAL;
+                UNITY_VERTEX_INPUT_INSTANCE_ID
             };
 
             struct v2f
@@ -97,6 +109,8 @@ Shader "Custom/Toon"
                 float2 uv : TEXCOORD0;
                 float4 vertex : SV_POSITION;
                 float fogFactor : TEXCOORD1;
+                float3 vertexWS : TEXCOORD2;
+                float3 normal : NORMAL;
             };
 
             v2f vert (appdata v)
@@ -105,12 +119,39 @@ Shader "Custom/Toon"
                 o.vertex = TransformObjectToHClip(v.vertex);
                 o.uv = TRANSFORM_TEX(v.uv, _MainTex);
                 o.fogFactor = ComputeFogFactor(o.vertex.z);
+                o.vertexWS = TransformObjectToWorld(v.vertex.xyz);
+                o.normal = TransformObjectToWorldNormal(v.normal);
                 return o;
             }
 
             half4 frag (v2f i) : SV_Target
             {
                 half4 col = SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, i.uv) * _MainColor;
+
+                Light mainLight = GetMainLight();
+                float dotValue = dot(i.normal, mainLight.direction);
+
+                // 一影
+                if (dotValue >= _Shade1Amount)
+                {
+                    col.rgb *= mainLight.color;
+                }
+                else
+                {
+                    // 二影
+                    if (dotValue / _Shade1Amount > _Shade2Amount)
+                    {
+                        col.rgb *= _Shade1Color.rgb;
+                    }
+                    else
+                    {
+                        col.rgb *= _Shade2Color.rgb;
+                    }
+                }
+                
+
+                Light addLight = GetAdditionalLight(0, i.vertexWS);
+
                 col.a *= _Alpha; 
                 col.rgb = MixFog(col.rgb, i.fogFactor);
 

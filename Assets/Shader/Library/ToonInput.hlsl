@@ -12,6 +12,14 @@ half4 _MainTex_ST;
 half4 _MainColor;
 float _Alpha;
 
+// Shade1
+half4 _Shade1Color;
+float _Shade1Amount;
+
+// Shade2
+half4 _Shade2Color;
+float _Shade2Amount;
+
 // Outline Properties
 half4 _OutlineColor; 
 float _OutlineRange;
