@@ -58,15 +58,18 @@ Shader "Custom/GeometryBreak"
 
             struct d2g
             {
-                float3 vertex : POS;
+                float3 vertexOS : POS;
+                float4 vertexCS : SV_POSITION;
+                float3 vertexWS : TEXCOORD2;
                 float2 uv : TEXCOORD0;
+                float fogFactor : TEXCOORD3;
             };
 
             struct g2f
             {
+                float4 vertex : SV_POSITION;
                 float2 uv : TEXCOORD0;
                 float fogFactor : TEXCOORD1;
-                float4 vertex : SV_POSITION;
                 float3 vertexWS : TEXCOORD2;
             };
 
@@ -126,7 +129,9 @@ Shader "Custom/GeometryBreak"
                     bary.y * i[1].uv + 
                     bary.z * i[2].uv;
 
-                o.vertex = positionOS;
+                o.vertexOS = positionOS;
+                o.vertexWS = TransformObjectToWorld(positionOS);
+                o.vertexCS = TransformObjectToHClip(positionOS);
                 
                 return o;
             }
@@ -134,31 +139,28 @@ Shader "Custom/GeometryBreak"
             [maxvertexcount(3)]
             void geom (triangle d2g input[3], inout TriangleStream<g2f> outStream)
             {
-                // float3 vec1 = input[1].vertex - input[0].vertex;
-                // float3 vec2 = input[2].vertex - input[0].vertex;
-                // float3 poriNormal = normalize(cross(vec1, vec2));
+                float3 vec1 = input[1].vertexWS - input[0].vertexWS;
+                float3 vec2 = input[2].vertexWS - input[0].vertexWS;
+                float3 poriNormal = normalize(cross(vec1, vec2));
 
-                // float3 center = (input[0].vertex + input[1].vertex + input[2].vertex) / 3;
+                float3 center = (input[0].vertexOS + input[1].vertexOS + input[2].vertexOS) / 3;
 
-                // float r = rand(center.xy);
+                float r = rand(center.xy);
 
                 [unroll]
                 for (int i = 0; i < 3; i++)
                 {
                     g2f o;
                     
-                    float3 vert = input[i].vertex;
-                    // float3 vert = input[i].vertex + poriNormal * _Amount * _BreakStrength * r;
+                    float3 dir = poriNormal * _Amount * _BreakStrength * r;
 
-                    o.vertex = TransformObjectToHClip(vert);
-                    o.vertexWS = TransformObjectToWorld(vert);
+                    o.vertex = TransformWorldToHClip(input[i].vertexWS + dir);
+                    o.vertexWS = input[i].vertexWS;
                     o.uv = TRANSFORM_TEX(input[i].uv, _MainTex);
                     o.fogFactor = ComputeFogFactor(o.vertex.xyz);
  
                     outStream.Append(o);
                 }
-
-                outStream.RestartStrip();
             }
 
             half4 frag (g2f i) : SV_Target
@@ -166,6 +168,7 @@ Shader "Custom/GeometryBreak"
                 half4 col = SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, i.uv) * _MainColor;
 
                 Light mainLight = GetMainLight();
+                float Lambert = saturate(mainLight.dir)
 
                 col.rgb = MixFog(col.rgb, i.fogFactor);
 
