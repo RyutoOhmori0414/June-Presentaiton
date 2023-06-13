@@ -10,8 +10,8 @@ TEXTURE2D(_HeightTex);
 SAMPLER(sampler_HeightTex);
 
 CBUFFER_START(UnityPerMaterial)
-half4 _MainTex_ST;
-half4 _HeightTex_ST;
+float4 _MainTex_ST;
+float4 _HeightTex_ST;
 float _DisplacementStrength;
 half4 _MainColor;
 float _Alpha;
