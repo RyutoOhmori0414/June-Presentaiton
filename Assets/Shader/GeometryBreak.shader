@@ -36,18 +36,21 @@ Shader "Custom/GeometryBreak"
             {
                 float4 vertex : POSITION;
                 float2 uv : TEXCOORD0;
+                float3 normal : NORMAL;
             };
 
             struct v2h
             {
                 float4 vertex : POS;
                 float2 uv : TEXCOORD0;
+                float3 normal : NORMAL;
             };
 
             struct HsControlPointOut
             {
                 float3 vertex : POS;
                 float2 uv : TEXCOORD0;
+                float3 normal : NORMAL;
             };
 
             struct HsConstantOut
@@ -61,6 +64,7 @@ Shader "Custom/GeometryBreak"
                 float3 vertexOS : POS;
                 float4 vertexCS : SV_POSITION;
                 float3 vertexWS : TEXCOORD2;
+                float3 normal : NORMAL;
                 float2 uv : TEXCOORD0;
                 float fogFactor : TEXCOORD3;
             };
@@ -68,6 +72,7 @@ Shader "Custom/GeometryBreak"
             struct g2f
             {
                 float4 vertex : SV_POSITION;
+                float3 normal : NORMAL;
                 float2 uv : TEXCOORD0;
                 float fogFactor : TEXCOORD1;
                 float3 vertexWS : TEXCOORD2;
@@ -79,6 +84,7 @@ Shader "Custom/GeometryBreak"
 
                 o.vertex = v.vertex;
                 o.uv = v.uv;
+                o.normal = v.normal;
 
                 return o;
             }
@@ -94,6 +100,7 @@ Shader "Custom/GeometryBreak"
                 
                 o.vertex = i[id].vertex.xyz;
                 o.uv = i[id].uv;
+                o.normal = i[id].normal;
                 
                 return o;
             }
@@ -129,9 +136,15 @@ Shader "Custom/GeometryBreak"
                     bary.y * i[1].uv + 
                     bary.z * i[2].uv;
 
+                float3 normal =
+                    bary.x * i[0].normal +
+                    bary.y * i[1].normal + 
+                    bary.z * i[2].normal;
+
                 o.vertexOS = positionOS;
                 o.vertexWS = TransformObjectToWorld(positionOS);
                 o.vertexCS = TransformObjectToHClip(positionOS);
+                o.normal = TransformObjectToWorldNormal(normal);
                 
                 return o;
             }
@@ -156,6 +169,7 @@ Shader "Custom/GeometryBreak"
 
                     o.vertex = TransformWorldToHClip(input[i].vertexWS + dir);
                     o.vertexWS = input[i].vertexWS;
+                    o.normal = input[i].normal;
                     o.uv = TRANSFORM_TEX(input[i].uv, _MainTex);
                     o.fogFactor = ComputeFogFactor(o.vertex.xyz);
  
@@ -168,7 +182,8 @@ Shader "Custom/GeometryBreak"
                 half4 col = SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, i.uv) * _MainColor;
 
                 Light mainLight = GetMainLight();
-                float Lambert = saturate(mainLight.dir)
+                float Lambert = saturate(dot(mainLight.direction, i.normal));
+                col.rgb *= Lambert;
 
                 col.rgb = MixFog(col.rgb, i.fogFactor);
 
