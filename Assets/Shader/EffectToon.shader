@@ -1,4 +1,4 @@
-Shader "Custom/GeometryBreakToon"
+Shader "Custom/EffectToon"
 {
     Properties
     {
@@ -6,11 +6,22 @@ Shader "Custom/GeometryBreakToon"
         [HDR]_MainColor ("MainColor", Color) = (1, 1, 1, 1)
         _Alpha ("Alpha", Range(0, 1)) = 1
         [Space(20)]
+        [Header(Enum)]
+        [KeywordEnum(DISSOLVE, GEOMETRY, SLICE)]
+        _Effect ("Effect Enum", Int) = 0
+        _Amount ("Amount", Range(0, 1)) = 0
+        [Space(20)]
         [Header(Tessellation)]
         _TessFactor ("TessFactor", Float) = 10
         _InsideTessFactor ("InsideTessFactor", Float) = 10
-        _Amount ("Amount", Range(0, 1)) = 0
         _BreakStrength ("BreakStrength", Float) = 10
+        [Space(20)]
+        [Header(Dissolve)]
+        _DissolveTex ("DissolveTex", 2D) = "white" {}
+        _DissolveRange ("Range", Range(0, 1)) = 0
+        [HDR] _DissolveColor ("DissolveColor", Color) = (0, 0, 0, 0)
+        [Header(Slice)]
+        _SliceStrength ("Strength", Float) = 5
         [Space(20)]
         [Header(Shade1)]
         _Shade1Color ("Color", Color) = (0, 0, 0, 0)
@@ -49,9 +60,11 @@ Shader "Custom/GeometryBreakToon"
             #pragma fragment frag
             // 奥行きのFogのキーワード定義
             #pragma multi_compile_fog
+
+            #pragma multi_compile _ _EFFECT_DISSOLVE _EFFECT_GEOMETRY _EFFECT_SLICE
             
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
-            #include "Assets/Shader/Library/GeometryBreakToonInput.hlsl"
+            #include "Assets/Shader/Library/EffectToonInput.hlsl"
             #include "Assets/Shader/Library/Random.hlsl"
 
             struct appdata
@@ -93,6 +106,12 @@ Shader "Custom/GeometryBreakToon"
             {
                 float4 vertex : SV_POSITION;
                 float fogFactor : TEXCOORD1;
+
+                #ifdef _EFFECT_DISSOLVE
+                float2 duv : TEXCOORD2;
+                #elif _EFFECT_SLICE
+                float3 vertexWS : TEXCOORD3;
+                #endif
             };
 
             v2h vert (appdata v)
@@ -126,11 +145,23 @@ Shader "Custom/GeometryBreakToon"
             {
                 HsConstantOut o;
 
+                #ifdef _EFFECT_GEOMETRY
+
                 o.tessFactor[0] = _TessFactor;
                 o.tessFactor[1] = _TessFactor;
                 o.tessFactor[2] = _TessFactor;
 
                 o.insideTessFactor = _InsideTessFactor;
+
+                #else
+
+                o.tessFactor[0] = 1;
+                o.tessFactor[1] = 1;
+                o.tessFactor[2] = 1;
+
+                o.insideTessFactor = 1;
+
+                #endif
 
                 return o;
             }
@@ -182,8 +213,21 @@ Shader "Custom/GeometryBreakToon"
                 for (int i = 0; i < 3; i++)
                 {
                     g2f o;
+                    float3 dir = 0;
+
+                    #ifdef _EFFECT_GEOMETRY
                     
-                    float3 dir = poriNormal * saturate(_Amount * 2 - 1) * _BreakStrength * r;
+                    dir = poriNormal * saturate(_Amount * 2 - 1) * _BreakStrength * r;
+
+                    #elif _EFFECT_DISSOLVE
+
+                    o.duv = TRANSFORM_TEX(input[i].uv, _DissolveTex);
+
+                    #elif _EFFECT_SLICE
+
+                    o.vertexWS = input[i].vertexWS;
+
+                    #endif
 
                     o.vertex = TransformWorldToHClip(input[i].vertexWS + dir);
                     o.fogFactor = ComputeFogFactor(o.vertex.xyz);
@@ -194,11 +238,35 @@ Shader "Custom/GeometryBreakToon"
 
             half4 frag (g2f i) : SV_Target
             {
+                #ifdef _EFFECT_SLICE
+
+                if (frac((i.vertexWS.y) * _SliceStrength) - _Amount < 0)
+                {
+                    discard;
+                }
+                
+                #endif
+
                 half4 col = _OutlineColor;
+
+                #ifdef _EFFECT_DISSOLVE
+
+                float dAlpha = SAMPLE_TEXTURE2D(_DissolveTex, sampler_DissolveTex, i.duv).r;
+                if (dAlpha < _Amount)
+                {
+                    col.a = 0;
+                }
+
+                #endif
+
                 col.a *= _Alpha;
                 col.rgb = MixFog(_OutlineColor.rgb, i.fogFactor);
                 
+                #ifdef _EFFECT_GEOMETRY
+
                 col.rgb = lerp(col.rgb, Mono(col.rgb), saturate(_Amount * 2));
+
+                #endif
 
                 col.rgb *= col.a;
                 return col;
@@ -221,10 +289,12 @@ Shader "Custom/GeometryBreakToon"
             #pragma multi_compile_fog
             // GPUInstancingに対応させる
             #pragma multi_compile_instancing
+            
+            #pragma multi_compile _ _EFFECT_DISSOLVE _EFFECT_GEOMETRY _EFFECT_SLICE
 
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
-            #include "Assets/Shader/Library/GeometryBreakToonInput.hlsl"
+            #include "Assets/Shader/Library/EffectToonInput.hlsl"
             #include "Assets/Shader/Library/Random.hlsl"
 
             struct appdata
@@ -269,6 +339,7 @@ Shader "Custom/GeometryBreakToon"
                 float4 vertex : SV_POSITION;
                 float fogFactor : TEXCOORD1;
                 float3 vertexWS : TEXCOORD2;
+                float2 duv : TEXCOORD3;
                 float3 normal : NORMAL;
             };
 
@@ -303,11 +374,23 @@ Shader "Custom/GeometryBreakToon"
             {
                 HsConstantOut o;
 
+                #ifdef _EFFECT_GEOMETRY
+
                 o.tessFactor[0] = _TessFactor;
                 o.tessFactor[1] = _TessFactor;
                 o.tessFactor[2] = _TessFactor;
 
                 o.insideTessFactor = _InsideTessFactor;
+
+                #else
+
+                o.tessFactor[0] = 1;
+                o.tessFactor[1] = 1;
+                o.tessFactor[2] = 1;
+
+                o.insideTessFactor = 1;
+
+                #endif
 
                 return o;
             }
@@ -357,13 +440,18 @@ Shader "Custom/GeometryBreakToon"
                 for (int i = 0; i < 3; i++)
                 {
                     g2f o;
-                    
-                    float3 dir = poriNormal * saturate(_Amount * 2 - 1) * _BreakStrength * r;
+                    float3 dir = 0;
 
+                    #ifdef _EFFECT_GEOMETRY
+                    
+                    dir = poriNormal * saturate(_Amount * 2 - 1) * _BreakStrength * r;
+
+                    #endif
                     o.vertex = TransformWorldToHClip(input[i].vertexWS + dir);
                     o.vertexWS = input[i].vertexWS;
                     o.normal = input[i].normal;
                     o.uv = TRANSFORM_TEX(input[i].uv, _MainTex);
+                    o.duv = TRANSFORM_TEX(input[i].uv, _DissolveTex);
                     o.fogFactor = ComputeFogFactor(o.vertex.xyz);
  
                     outStream.Append(o);
@@ -371,6 +459,15 @@ Shader "Custom/GeometryBreakToon"
             }
             half4 frag (g2f i) : SV_Target
             {
+                #ifdef _EFFECT_SLICE
+
+                if (frac((i.vertexWS.y) * _SliceStrength) - _Amount < 0)
+                {
+                    discard;
+                }
+                
+                #endif
+
                 half4 col = SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, i.uv) * _MainColor;
 
                 Light mainLight = GetMainLight();
@@ -393,14 +490,33 @@ Shader "Custom/GeometryBreakToon"
                         col.rgb *= _Shade2Color.rgb;
                     }
                 }
-                
+
+                #ifdef _EFFECT_DISSOLVE
+
+                float dAlpha = SAMPLE_TEXTURE2D(_DissolveTex, sampler_DissolveTex, i.duv);
+                float amount = remap(_Amount, -_DissolveRange, 1);
+                if (dAlpha < amount + _DissolveRange)
+                {
+                    col.rgb += _DissolveColor.rgb;
+
+                    if (dAlpha < amount)
+                    {
+                        col.a = 0;
+                    }
+                }
+
+                #endif
 
                 Light addLight = GetAdditionalLight(0, i.vertexWS);
 
                 col.a *= _Alpha; 
                 col.rgb = MixFog(col.rgb, i.fogFactor);
 
+                #ifdef _EFFECT_GEOMETRY
+
                 col.rgb = lerp(col.rgb, Mono(col.rgb), saturate(_Amount * 2));
+
+                #endif
 
                 col.rgb *= col.a;
                 return col;

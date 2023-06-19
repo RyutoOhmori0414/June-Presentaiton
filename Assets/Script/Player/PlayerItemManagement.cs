@@ -5,15 +5,15 @@ using UnityEngine.UI;
 [RequireComponent(typeof(Collider))]
 public class PlayerItemManagement : MonoBehaviour
 {
-    [Tooltip("Player‚ÌItemƒCƒ“ƒxƒ“ƒgƒŠ")]
+    [Tooltip("Playerï¿½ï¿½Itemï¿½Cï¿½ï¿½ï¿½xï¿½ï¿½ï¿½gï¿½ï¿½")]
     [SerializeField] private GameObject _itemBoxCanvas;
-    [Tooltip("ItemButtonPreFab, ƒCƒ“ƒxƒ“ƒgƒŠ‚É‚¾‚·Button")]
+    [Tooltip("ItemButtonPreFab, ï¿½Cï¿½ï¿½ï¿½xï¿½ï¿½ï¿½gï¿½ï¿½ï¿½É‚ï¿½ï¿½ï¿½Button")]
     [SerializeField] private GameObject _itemButton;
-    [Tooltip("Item‚ªæ“¾‰Â”\ó‘Ô‚É‚ ‚é‚Æ‚«‚É•\¦‚³‚ê‚épanel")]
+    [Tooltip("Itemï¿½ï¿½ï¿½æ“¾ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½panel")]
     [SerializeField] private GameObject _itemPanel;
-    [Tooltip("Player‚ªŠ‚µ‚Ä‚¢‚éƒAƒCƒeƒ€")]
+    [Tooltip("Playerï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä‚ï¿½ï¿½ï¿½Aï¿½Cï¿½eï¿½ï¿½")]
     [SerializeField] public List<string> PlayerItemList = new();
-    [Tooltip("Player‚ªŠ‚µ‚Ä‚¢‚é‹àŠz")]
+    [Tooltip("Playerï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä‚ï¿½ï¿½ï¿½ï¿½ï¿½z")]
     [SerializeField] public int PlayerMoney = 0;
     private bool _trrigerPrime = false;
     private ItemBase _hitItem;
@@ -22,100 +22,98 @@ public class PlayerItemManagement : MonoBehaviour
     {
         if (_itemBoxCanvas == null || _itemButton == null || _itemPanel == null)
         {
-            Debug.Log("ƒAƒ^ƒbƒ`‚³‚ê‚Ä‚¢‚È‚¢‰ÓŠ‚ª‚ ‚è‚Ü‚·");
+            Debug.Log("ï¿½Aï¿½^ï¿½bï¿½`ï¿½ï¿½ï¿½ï¿½Ä‚ï¿½ï¿½È‚ï¿½ï¿½Óï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ü‚ï¿½");
         }
     }
     public void KeyProcess(ItemBase _hitObject)
     {
-        if (_hitObject != null && _trrigerPrime)
-        {
-            //ItemBox‚ÌqƒIƒuƒWƒFƒNƒg‚Æ‚µ‚ÄButton‚ğ¶¬‚·‚é
+            //ItemBoxï¿½Ìqï¿½Iï¿½uï¿½Wï¿½Fï¿½Nï¿½gï¿½Æ‚ï¿½ï¿½ï¿½Buttonï¿½ğ¶ï¿½ï¿½ï¿½ï¿½ï¿½
             var InstantiateObj = Instantiate(_itemButton, _itemBoxCanvas.transform);
 
-            //¶¬‚µ‚½Button‚ÌOnClick‚ÉItemBase‚Ìˆ—‚ğ’Ç‰Á‚µ‚Ä‚¢‚é
+            //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Buttonï¿½ï¿½OnClickï¿½ï¿½ItemBaseï¿½Ìï¿½ï¿½ï¿½ï¿½ï¿½Ç‰ï¿½ï¿½ï¿½ï¿½Ä‚ï¿½ï¿½ï¿½
             InstantiateObj.GetComponent<Button>().onClick.AddListener(() => _hitObject.Action());
             InstantiateObj.GetComponentInChildren<Text>().text = _hitObject.GetItemName;
+            Debug.Log("yobareta");
             PlayerItemList.Add(_hitObject.GetItemName);
-            _hitObject.ItemOFF();
-            _itemPanel.SetActive(false);    
-        }
+            //_hitObject.ItemOFF();
+            //_itemPanel.SetActive(false);
     }
 
-    void ItemBoxChanger()
-    {
-        if (_itemBoxCanvas.activeSelf)
-        {
-            if (_hitItem != null)
-            {
-                _itemPanel.SetActive(true);
-            }
+    // void ItemBoxChanger()
+    // {
+    //     if (_itemBoxCanvas.activeSelf)
+    //     {
+    //         if (_hitItem != null)
+    //         {
+    //             _itemPanel.SetActive(true);
+    //         }
 
-            _itemBoxCanvas.SetActive(false);
-        }
-        else
-        {
-            if (_itemPanel.activeSelf)
-            {
-                _itemPanel.SetActive(false); 
-            }
+    //         _itemBoxCanvas.SetActive(false);
+    //     }
+    //     else
+    //     {
+    //         if (_itemPanel.activeSelf)
+    //         {
+    //             _itemPanel.SetActive(false); 
+    //         }
 
-            _itemBoxCanvas.SetActive(true);
-        }
-    }
+    //         _itemBoxCanvas.SetActive(true);
+    //     }
+    // }
 
-    private void Update()
-    {
-        if (Input.GetKeyDown(KeyCode.B))
-        {
-            ItemBoxChanger();
-        }
-        if (_hitItem != null && Input.GetKeyDown(KeyCode.F))
-        {
-            KeyProcess(_hitItem);
-        }
-    }
+    // private void Update()
+    // {
+    //     if (Input.GetKeyDown(KeyCode.B))
+    //     {
+    //         ItemBoxChanger();
+    //     }
+    //     if (_hitItem != null && Input.GetKeyDown(KeyCode.F))
+    //     {
+    //         KeyProcess(_hitItem);
+    //     }
+    // }
 
-    private void OnTriggerEnter(Collider other)
-    {
-        _trrigerPrime = true;
+    // private void OnTriggerEnter(Collider other)
+    // {
+    //     _trrigerPrime = true;
         
-        if (other.gameObject.TryGetComponent(out ItemBase item))
-        {
-            _hitItem = item;
-        }
+    //     if (other.gameObject.TryGetComponent(out ItemBase item))
+    //     {
+    //         _hitItem = item;
+    //     }
 
 
-        if (_hitItem != null && !_itemBoxCanvas.activeSelf)
-        {
-            _itemPanel.SetActive(true);
-            _itemPanel.GetComponentInChildren<Text>().text = $"F {_hitItem.GetItemName}";
-        }
-        //KeyProcess(other.gameObject);
-    }
+    //     // if (_hitItem != null && !_itemBoxCanvas.activeSelf)
+    //     // {
+    //     //     _itemPanel.SetActive(true);
+    //     //     _itemPanel.GetComponentInChildren<Text>().text = $"F {_hitItem.GetItemName}";
+    //     // }
+    //     //KeyProcess(other.gameObject);
+    // }
 
-    private void OnTriggerExit(Collider other)
-    {
-        _trrigerPrime = false;
-        _hitItem = null;
+    // private void OnTriggerExit(Collider other)
+    // {
+    //     _trrigerPrime = false;
+    //     _hitItem = null;
 
-        if (_itemPanel.activeSelf)
-        {
-            _itemPanel.SetActive(false);
-        }
-    }
+    //     if (_itemPanel.activeSelf)
+    //     {
+    //         _itemPanel.SetActive(false);
+    //     }
+    // }
 
-    //void ClickProcess()//¶ƒNƒŠƒbƒN‚Ìˆ—
+    //void ClickProcess()//ï¿½ï¿½ï¿½Nï¿½ï¿½ï¿½bï¿½Nï¿½ï¿½ï¿½Ìï¿½ï¿½ï¿½
     //{
     //    Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
 
     //    if (Physics.Raycast(ray, out RaycastHit hit))
     //    {
-    //        //Ray‚ğ”ò‚Î‚µ‚Ä‘ÎÛ‚ªItemBase‚ğŒp³‚µ‚Ä‚¢‚½ê‡‚ÉÀs
+    //        //Rayï¿½ï¿½ï¿½Î‚ï¿½ï¿½Ä‘ÎÛ‚ï¿½ItemBaseï¿½ï¿½ï¿½pï¿½ï¿½ï¿½ï¿½ï¿½Ä‚ï¿½ï¿½ï¿½ï¿½ê‡ï¿½Éï¿½ï¿½s
     //        if (hit.collider.gameObject.TryGetComponent<ItemBase>(out ItemBase itemBase))
     //        {
-    //            //ItemBox‚ÌqƒIƒuƒWƒFƒNƒg‚Æ‚µ‚ÄButton‚ğ¶¬‚·‚é
+    //            //ItemBoxï¿½Ìqï¿½Iï¿½uï¿½Wï¿½Fï¿½Nï¿½gï¿½Æ‚ï¿½ï¿½ï¿½Buttonï¿½ğ¶ï¿½ï¿½ï¿½ï¿½ï¿½
     //            var InstantiateObj = Instantiate(_itemButton, _itemCanvas.transform);
-    //            //¶¬‚µ‚½Button‚ÌOnClick‚ÉItemBase‚Ìˆ—‚ğ’Ç‰Á‚µ‚Ä‚¢‚é
+    //            //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Buttonï¿½ï¿½OnClickï¿½ï¿½ItemBaseï¿½Ìï¿½ï¿½ï¿½ï¿½ï¿½Ç‰ï¿½ï¿½ï¿½ï¿½Ä‚ï¿½ï¿½ï¿½
     //            InstantiateObj.GetComponent<Button>().onClick.AddListener(() => itemBase.Action());
     //            InstantiateObj.GetComponentInChildren<Text>().text = itemBase.GetItemName;
     //            _itemList.Add(InstantiateObj);

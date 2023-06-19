@@ -7,23 +7,29 @@ public class ItemStore : MonoBehaviour
 {
     /// <summary>PlayerItemManagement</summary>
     private PlayerItemManagement _pim;
-    [Tooltip("Player‚ª”ÍˆÍ“à‚É‚¢‚é‚Æ‚«‚É•\¦‚·‚éˆÄ“à—p‚ÌUI")]
+    [Tooltip("Playerï¿½ï¿½ï¿½ÍˆÍ“ï¿½ï¿½É‚ï¿½ï¿½ï¿½Æ‚ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä“ï¿½ï¿½pï¿½ï¿½UI")]
     [SerializeField] private GameObject _infomationUI = null;
-    [Tooltip("ƒAƒCƒeƒ€ƒXƒgƒA‚Å”„‚Á‚Ä‚¢‚éƒAƒCƒeƒ€")]
+    [Tooltip("ï¿½Aï¿½Cï¿½eï¿½ï¿½ï¿½Xï¿½gï¿½Aï¿½Å”ï¿½ï¿½ï¿½ï¿½Ä‚ï¿½ï¿½ï¿½Aï¿½Cï¿½eï¿½ï¿½")]
     [SerializeField] private List<GameObject> _sellItem = new();
-    [Tooltip("ƒAƒCƒeƒ€ƒVƒ‡ƒbƒv‚ªŠJ‚©‚ê‚½‚É‚¾‚·Panel(LayoutGroup„§)")]
+    [Tooltip("ï¿½Aï¿½Cï¿½eï¿½ï¿½ï¿½Vï¿½ï¿½ï¿½bï¿½vï¿½ï¿½ï¿½Jï¿½ï¿½ï¿½ê‚½ï¿½ï¿½ï¿½É‚ï¿½ï¿½ï¿½Panel(LayoutGroupï¿½ï¿½ï¿½ï¿½)")]
     [SerializeField] private GameObject _shopPanel = null;
-    [Tooltip("ƒVƒ‡ƒbƒv‚Ìpanel‚ÉƒCƒ“ƒXƒ^ƒ“ƒX‚·‚éButton")]
+    [Tooltip("ï¿½Vï¿½ï¿½ï¿½bï¿½vï¿½ï¿½panelï¿½ÉƒCï¿½ï¿½ï¿½Xï¿½^ï¿½ï¿½ï¿½Xï¿½ï¿½ï¿½ï¿½Button")]
     [SerializeField] private GameObject _button;
+    [SerializeField] private GameObject _menuPanel = default;
     private Dictionary<string, GameObject> _sellDic = new();
     private Dictionary<string, GameObject> _buttonDic = new();
     private TradeType _tradeType = TradeType.money;
 
     private void Start()
     {
+        _pim = FindObjectOfType<PlayerItemManagement>();
+        GameManager.Instance.CustomInputManager.PlayerControl.PlayerActionMap.Menu.started += _ => _menuPanel.SetActive(!_menuPanel.active);
+
+        _menuPanel.SetActive(false);
+
         if (_shopPanel == null || _infomationUI == null)
         {
-            Debug.Log("ƒAƒ^ƒbƒ`‚³‚ê‚Ä‚¢‚È‚¢‚à‚Ì‚ª‚ ‚è‚Ü‚·");
+            Debug.Log("ï¿½Aï¿½^ï¿½bï¿½`ï¿½ï¿½ï¿½ï¿½Ä‚ï¿½ï¿½È‚ï¿½ï¿½ï¿½ï¿½Ì‚ï¿½ï¿½ï¿½ï¿½ï¿½Ü‚ï¿½");
         }
 
         if (_sellItem != null)
@@ -38,15 +44,15 @@ public class ItemStore : MonoBehaviour
             }
         }
     }
-    /// <summary>”„‚Á‚Ä‚¢‚éƒAƒCƒeƒ€‚ªw“ü‰Â”\ó‘Ô‚É‚ ‚é‚©‚Ì”»’è</summary>
+    /// <summary>ï¿½ï¿½ï¿½ï¿½ï¿½Ä‚ï¿½ï¿½ï¿½Aï¿½Cï¿½eï¿½ï¿½ï¿½ï¿½ï¿½wï¿½ï¿½ï¿½Â”\ï¿½ï¿½Ô‚É‚ï¿½ï¿½é‚©ï¿½Ì”ï¿½ï¿½ï¿½</summary>
     private void CanSellItem()
     {
-        //”„‚Á‚Ä‚¢‚éƒAƒCƒeƒ€‚ÌŒÂ”‰ñ”»’èƒ‹[ƒv
+        //ï¿½ï¿½ï¿½ï¿½ï¿½Ä‚ï¿½ï¿½ï¿½Aï¿½Cï¿½eï¿½ï¿½ï¿½ÌŒÂï¿½ï¿½ñ”»’èƒ‹ï¿½[ï¿½v
         for (int i = 0; i < _sellItem.Count; i++)
         {
             var sellItemScript = _sellItem[i].GetComponent<ItemBase>();
 
-            //w“ü•s‰Â‚Ìó‘Ô‚É‚ ‚é‚Æ‚«‚ÉButton‚ğg—p•s‰Â‚É‚·‚é
+            //ï¿½wï¿½ï¿½ï¿½sï¿½Â‚Ìï¿½Ô‚É‚ï¿½ï¿½ï¿½Æ‚ï¿½ï¿½ï¿½Buttonï¿½ï¿½ï¿½gï¿½pï¿½sï¿½Â‚É‚ï¿½ï¿½ï¿½
             if (!sellItemScript.Condition(_pim.PlayerItemList,_pim.PlayerMoney))
             {
                 _buttonDic[sellItemScript.GetItemName].GetComponent<Button>().interactable = false;
@@ -58,7 +64,7 @@ public class ItemStore : MonoBehaviour
         }
     }
     
-    /// <summary>w“üˆ—</summary>
+    /// <summary>ï¿½wï¿½ï¿½ï¿½ï¿½ï¿½ï¿½</summary>
     public void Trade(string itemName)
     { 
         var item = _sellDic[itemName].GetComponent<ItemBase>();
@@ -82,28 +88,28 @@ public class ItemStore : MonoBehaviour
                 break;
         }
     }
-    private void Update()
-    {
-        //ItemStore‚ªŠJ‚©‚ê‚½‚ÉÀs‚·‚é
-        if (Input.GetKeyDown(KeyCode.F) && _pim != null)
-        {
-            if (_shopPanel.activeSelf)
-            {
-                _infomationUI.SetActive(true);
-                _shopPanel.SetActive(false);
-            }
-            else
-            {
-                _infomationUI.SetActive(false);
-                _shopPanel.SetActive(true);
-                CanSellItem();
-            }
-        }
-        if (Input.GetKeyDown(KeyCode.B))
-        {
-            _infomationUI.SetActive(false);
-        }
-    }
+    // private void Update()
+    // {
+    //     //ItemStoreï¿½ï¿½ï¿½Jï¿½ï¿½ï¿½ê‚½ï¿½ï¿½ï¿½Éï¿½ï¿½sï¿½ï¿½ï¿½ï¿½
+    //     if (Input.GetKeyDown(KeyCode.F) && _pim != null)
+    //     {
+    //         if (_shopPanel.activeSelf)
+    //         {
+    //             _infomationUI.SetActive(true);
+    //             _shopPanel.SetActive(false);
+    //         }
+    //         else
+    //         {
+    //             _infomationUI.SetActive(false);
+    //             _shopPanel.SetActive(true);
+    //             CanSellItem();
+    //         }
+    //     }
+    //     if (Input.GetKeyDown(KeyCode.B))
+    //     {
+    //         _infomationUI.SetActive(false);
+    //     }
+    // }
 
     private void OnTriggerEnter(Collider other)
     {
