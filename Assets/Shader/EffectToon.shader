@@ -64,8 +64,8 @@ Shader "Custom/EffectToon"
             #pragma multi_compile _ _EFFECT_DISSOLVE _EFFECT_GEOMETRY _EFFECT_SLICE
             
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
-            #include "Assets/Shader/Library/EffectToonInput.hlsl"
-            #include "Assets/Shader/Library/Random.hlsl"
+            #include "Library/EffectToonInput.hlsl"
+            #include "Library/Random.hlsl"
 
             struct appdata
             {
@@ -294,8 +294,9 @@ Shader "Custom/EffectToon"
 
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
-            #include "Assets/Shader/Library/EffectToonInput.hlsl"
-            #include "Assets/Shader/Library/Random.hlsl"
+            #include "Library/EffectToonInput.hlsl"
+            #include "Library/Random.hlsl"
+            #include "Library/VertLighting.hlsl"
 
             struct appdata
             {
@@ -340,6 +341,7 @@ Shader "Custom/EffectToon"
                 float fogFactor : TEXCOORD1;
                 float3 vertexWS : TEXCOORD2;
                 float2 duv : TEXCOORD3;
+                float4 vertLight : TEXCOORD4;
                 float3 normal : NORMAL;
             };
 
@@ -450,6 +452,7 @@ Shader "Custom/EffectToon"
                     o.vertex = TransformWorldToHClip(input[i].vertexWS + dir);
                     o.vertexWS = input[i].vertexWS;
                     o.normal = input[i].normal;
+                    o.vertLight = VertLighting(o.vertexWS, o.normal);
                     o.uv = TRANSFORM_TEX(input[i].uv, _MainTex);
                     o.duv = TRANSFORM_TEX(input[i].uv, _DissolveTex);
                     o.fogFactor = ComputeFogFactor(o.vertex.xyz);
@@ -471,7 +474,7 @@ Shader "Custom/EffectToon"
                 half4 col = SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, i.uv) * _MainColor;
 
                 Light mainLight = GetMainLight();
-                float dotValue = dot(i.normal, mainLight.direction);
+                float dotValue = dot(i.normal, mainLight.direction) + saturate(i.vertLight.w);
 
                 // 一影
                 if (dotValue >= _Shade1Amount)
@@ -509,6 +512,7 @@ Shader "Custom/EffectToon"
 
                 Light addLight = GetAdditionalLight(0, i.vertexWS);
 
+                col.rgb += i.vertLight.rgb;
                 col.a *= _Alpha; 
                 col.rgb = MixFog(col.rgb, i.fogFactor);
 

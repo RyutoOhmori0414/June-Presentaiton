@@ -42,7 +42,7 @@ Shader "Custom/Toon"
             #pragma multi_compile_fog
             
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
-            #include "Assets/Shader/Library/ToonInput.hlsl"
+            #include "Library/ToonInput.hlsl"
 
             struct appdata
             {
@@ -94,7 +94,8 @@ Shader "Custom/Toon"
 
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
-            #include "Assets/Shader/Library/ToonInput.hlsl"
+            #include "Library/ToonInput.hlsl"
+            #include "Assets/Shader/Library/VertLighting.hlsl"
 
             struct appdata
             {
@@ -110,6 +111,7 @@ Shader "Custom/Toon"
                 float4 vertex : SV_POSITION;
                 float fogFactor : TEXCOORD1;
                 float3 vertexWS : TEXCOORD2;
+                float4 vertLight : TEXCOORD3;
                 float3 normal : NORMAL;
             };
 
@@ -121,6 +123,7 @@ Shader "Custom/Toon"
                 o.fogFactor = ComputeFogFactor(o.vertex.z);
                 o.vertexWS = TransformObjectToWorld(v.vertex.xyz);
                 o.normal = TransformObjectToWorldNormal(v.normal);
+                o.vertLight = VertLighting(o.vertexWS, o.normal);
                 return o;
             }
 
@@ -129,7 +132,7 @@ Shader "Custom/Toon"
                 half4 col = SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, i.uv) * _MainColor;
 
                 Light mainLight = GetMainLight();
-                float dotValue = dot(i.normal, mainLight.direction);
+                float dotValue = dot(i.normal, mainLight.direction) + saturate(i.vertLight.w);
 
                 // 一影
                 if (dotValue >= _Shade1Amount)
@@ -148,10 +151,8 @@ Shader "Custom/Toon"
                         col.rgb *= _Shade2Color.rgb;
                     }
                 }
-                
 
-                Light addLight = GetAdditionalLight(0, i.vertexWS);
-
+                col.rgb += i.vertLight.rgb;
                 col.a *= _Alpha; 
                 col.rgb = MixFog(col.rgb, i.fogFactor);
 
