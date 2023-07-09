@@ -29,6 +29,11 @@ Shader "Custom/Toon"
         LOD 100
         Blend SrcAlpha OneMinusSrcAlpha
 
+        HLSLINCLUDE
+        #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+        #include "Library/ToonInput.hlsl"
+        ENDHLSL
+
         // Outlineを描画するPass
         Pass
         {
@@ -41,9 +46,7 @@ Shader "Custom/Toon"
             // 奥行きのFogのキーワード定義
             #pragma multi_compile_fog
             
-            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
-            #include "Library/ToonInput.hlsl"
-
+            
             struct appdata
             {
                 float4 vertex : POSITION;
@@ -92,9 +95,7 @@ Shader "Custom/Toon"
             // GPUInstancingに対応させる
             #pragma multi_compile_instancing
 
-            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
-            #include "Library/ToonInput.hlsl"
             #include "Assets/Shader/Library/VertLighting.hlsl"
 
             struct appdata
@@ -132,7 +133,7 @@ Shader "Custom/Toon"
                 half4 col = SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, i.uv) * _MainColor;
 
                 Light mainLight = GetMainLight();
-                float dotValue = dot(i.normal, mainLight.direction) + saturate(i.vertLight.w);
+                float dotValue = dot(i.normal, mainLight.direction) + saturate(i.vertLight.w) * mainLight.shadowAttenuation;
 
                 // 一影
                 if (dotValue >= _Shade1Amount)
@@ -161,5 +162,7 @@ Shader "Custom/Toon"
             }
             ENDHLSL
         }
+
+        UsePass "Hidden/ToonShadow/ShadowCaster"
     }
 }

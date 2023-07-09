@@ -527,5 +527,7 @@ Shader "Custom/EffectToon"
             }
             ENDHLSL
         }
+
+        UsePass "Hidden/ToonShadow/ShadowCaster"
     }
 }
